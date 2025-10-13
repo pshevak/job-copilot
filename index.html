@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Co-Pilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom styles for tabbed interface */
+        .tab-button.active {
+            border-bottom-color: #4f46e5;
+            color: #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-6xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-indigo-600 dark:text-indigo-400">Job Application Co-Pilot</h1>
+            <p class="mt-2 text-slate-600 dark:text-slate-400">Your personal assistant for crafting tailored job applications.</p>
+        </header>
+
+        <main class="flex flex-col md:flex-row gap-8">
+            <!-- Sidebar / Stepper -->
+            <aside class="w-full md:w-1/4">
+                <nav class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <ol class="space-y-4">
+                        <li>
+                            <a href="#" class="step-link group flex items-center p-3 rounded-lg" data-step="1">
+                                <span class="step-indicator flex items-center justify-center w-8 h-8 text-sm font-bold rounded-full bg-indigo-600 text-white">1</span>
+                                <span class="ml-4 font-medium text-slate-700 dark:text-slate-300">Your Info</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="step-link group flex items-center p-3 rounded-lg" data-step="2">
+                                <span class="step-indicator flex items-center justify-center w-8 h-8 text-sm font-bold rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">2</span>
+                                <span class="ml-4 font-medium text-slate-500 dark:text-slate-400">Job Details</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="step-link group flex items-center p-3 rounded-lg" data-step="3">
+                                <span class="step-indicator flex items-center justify-center w-8 h-8 text-sm font-bold rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400">3</span>
+                                <span class="ml-4 font-medium text-slate-500 dark:text-slate-400">Custom Questions</span>
+                            </a>
+                        </li>
+                    </ol>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <div id="main-content" class="flex-1">
+                <div id="form-container" class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
+                    <form id="app-form">
+                        <!-- Step 1: Your Info -->
+                        <div id="step-1" class="step-content">
+                            <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">Step 1: Role & Resume</h2>
+                             <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Select Role Type (Mandatory)</label>
+                                    <div class="flex items-center space-x-4 p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="role" value="PM" class="form-radio text-indigo-600" checked>
+                                            <span class="ml-2">Product Manager (PM)</span>
+                                        </label>
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="role" value="SDE" class="form-radio text-indigo-600">
+                                            <span class="ml-2">Software Engineer (SDE)</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="resume-upload" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Upload Your Resume (Mandatory)</label>
+                                    <input type="file" id="resume-upload" accept=".txt,.md,.pdf" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 dark:file:bg-indigo-900/50 file:text-indigo-700 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900 cursor-pointer">
+                                    <div id="file-upload-status" class="text-xs mt-1 text-slate-500">Upload a .txt or .pdf file.</div>
+                                    <p class="text-xs mt-2 font-medium text-slate-600 dark:text-slate-400">
+                                        Or, you can paste the resume text below:
+                                    </p>
+                                    <textarea id="resume-paste" rows="8" placeholder="Paste your resume text here..." class="mt-2 w-full p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
+                                </div>
+                            </div>
+                            <div class="mt-8 text-right">
+                                <button type="button" class="next-btn bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-all">Next &rarr;</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Job Details -->
+                        <div id="step-2" class="step-content hidden">
+                            <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">Step 2: Job Details</h2>
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="jd" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Paste Job Description (Mandatory)</label>
+                                    <textarea id="jd" rows="10" placeholder="Paste the full job description here..." required class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
+                                </div>
+                                <div>
+                                    <label for="linkedin-post" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">LinkedIn Post Content (Optional)</label>
+                                    <textarea id="linkedin-post" rows="5" placeholder="If applying via a LinkedIn post, paste the post's content here..." class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
+                                </div>
+                            </div>
+                            <div class="mt-8 flex justify-between">
+                                <button type="button" class="prev-btn bg-slate-200 dark:bg-slate-700 font-bold py-2 px-6 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all">&larr; Previous</button>
+                                <button type="button" class="next-btn bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-all">Next &rarr;</button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Custom Questions -->
+                        <div id="step-3" class="step-content hidden">
+                            <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">Step 3: Custom Questions</h2>
+                            <div>
+                                <label for="custom-questions" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Custom Application Questions (Optional)</label>
+                                <textarea id="custom-questions" rows="10" placeholder="Enter any specific questions from the application, one per line..." class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
+                                <p class="text-xs text-slate-500 mt-2">If there are no custom questions, you can leave this blank.</p>
+                            </div>
+                            <div class="mt-8 flex justify-between">
+                                <button type="button" class="prev-btn bg-slate-200 dark:bg-slate-700 font-bold py-2 px-6 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-all">&larr; Previous</button>
+                                <button type="submit" id="generate-btn" class="bg-emerald-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-500/50 transition-all transform hover:scale-105">
+                                    ✨ Generate Content
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Output Section -->
+                <div id="output-section" class="mt-8 hidden">
+                     <div id="loader-container" class="flex flex-col justify-center items-center py-10 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 hidden">
+                        <div class="loader"></div>
+                        <p class="ml-4 text-lg mt-4">Generating content, this may take a moment...</p>
+                    </div>
+                    <div id="results-container" class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 hidden">
+                        <!-- Tab buttons -->
+                        <div id="tab-buttons" class="border-b border-slate-200 dark:border-slate-700 flex">
+                           <!-- Tabs generated here -->
+                        </div>
+                        <!-- Tab content -->
+                        <div id="tab-content" class="p-6">
+                           <!-- Content generated here -->
+                        </div>
+                    </div>
+                     <div id="error-message" class="mt-6 hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
+                        <strong class="font-bold">Error:</strong>
+                        <span class="block sm:inline">Could not generate content. Please check the console for details.</span>
+                    </div>
+                </div>
+
+            </div> <!-- /main-content -->
+        </main>
+    </div>
+
+<script>
+    // --- PRE-LOADED CONTEXT ---
+    const SOP_CONTEXT = `
+"Are computer systems conscious?" This question occupied my thoughts during my teenage years, emerging when I acquired my personal computer. Despite years of learning and development, a definitive answer remains elusive. This curiosity spurred my pursuit of a bachelor's in computer science, forming the basis for my career as a full-stack software developer. With over six years of experience at esteemed organizations like Barclays, JP Morgan, and FIS Global, I have recognized the mission-critical nature of the tech industry's applications, leading to the creation of simple, scalable, and sustainable solutions. The once modest software ecosystem evolved into a complex realm, necessitating continuous alignment with advancements for professional growth in this dynamic industry. This evolution motivates me to pursue a master's in computer science, fulfill career aspirations, engage with the current algorithmic world, and contribute to advanced, automated, and intuitive technologies for global betterment. My experience includes leading teams, migrating systems to AWS, developing regulatory reporting products, and significantly improving operational efficiency through automation, such as reducing a disaster recovery pipeline from 4+ hours to under 10 minutes at Barclays and saving 10+ hours weekly with a bulk upload feature at FIS Global.
+    `;
+
+    const PROJECT_CONTEXT = `
+Project 1: D-FuseSmileNet - Deep Learning for Spontaneous Smile Recognition. Built a transformer-based classifier for spontaneous smile detection using a novel fusion of handcrafted D-Marker features and learned deep learning representations. This approach achieved state-of-the-art accuracy on four public datasets (UVA-NEMO: 88.7%, MMI: 99.7%, SPOS: 98.5%, BBC: 100%), surpassing previous methods by creating more discriminative and computationally efficient feature representations.
+
+Project 2: Clinical NER with LLMs and Chain-of-Thought Prompting. Developed an LLM-driven annotation pipeline for low-resource Bengali medical text. Used few-shot and Chain-of-Thought (CoT) prompting with GPT-4 to generate synthetic labels. This automated process boosted a downstream NER model's F1 score to 46.0, closing over two-thirds of the performance gap to fully supervised models and eliminating the need for manual expert labeling.
+    `;
+
+    let resumeText = `
+PRAJAKTA SHEVAKARI
++1 (443) 401-8792 | prajaktashevakari@gmail.com | Baltimore, MD, USA | Willing to Relocate
+
+PROFESSIONAL SUMMARY
+Aspiring Software Engineer and current Computer Science master's student at Johns Hopkins University, with a strong foundation in backend development, distributed systems, cloud infrastructure, and applied machine learning. Experienced in building scalable systems and deploying ML-driven solutions across fintech and academic settings, with strong problem-solving skills and a focus on delivering efficient, reliable solutions.
+
+EDUCATION
+Johns Hopkins University, Master's, Computer Science (Expected May 2026)
+Savitribai Phule Pune University, Bachelor's, Computer Science (May 2017)
+
+SKILLS
+Programming: Java, Python, AngularJS, Bash, HTML/CSS, JavaScript, PL/SQL
+Frameworks & Tools: NLP, LLMs, Transformer, Spring, Hibernate, Apache Kafka, Chef, Autosys, Jenkins, Git, Apache Spark
+Databases & Cloud: SQL, Oracle, REST APIs, Microservices, AWS
+
+PROFESSIONAL EXPERIENCE
+JHU - Software Developer Intern (Summer 2025): Developed internal automation tools in Python for HR and operations.
+Barclays - Lead Development Engineer (Apr 2023 - May 2024): Led development of a real-time executive dashboard. Automated disaster recovery deployment pipeline, reducing release time from 4+ hours to <10 minutes.
+JP Morgan Chase - Software Engineer III (Oct 2021 - Apr 2023): Led cloud migration project to AWS for APAC regulatory reporting. Developed a Java/Spark tool for AWS data processing. Reduced MTTR by 70%.
+FIS Global - Software Engineer (Jul 2017 - Oct 2021): Team lead for a middle office trade processing project. As Release Manager, delivered 90+ weekly releases with 95% on-time rate. Received "Above and Beyond" award for a bulk upload feature saving 10+ hours weekly.
+
+PROJECTS
+D-FuseSmileNet: Transformer-based classifier for spontaneous smile detection achieving state-of-the-art accuracy.
+Clinical NER with LLMs: LLM-driven annotation pipeline for Bengali medical text, boosting NER model F1 to 46.0.
+    `;
+
+    // --- DOM ELEMENTS ---
+    const form = document.getElementById('app-form');
+    const resumeUpload = document.getElementById('resume-upload');
+    const resumePaste = document.getElementById('resume-paste');
+    const fileUploadStatus = document.getElementById('file-upload-status');
+    const outputSection = document.getElementById('output-section');
+    const loader = document.getElementById('loader-container');
+    const resultsContainer = document.getElementById('results-container');
+    const errorMessage = document.getElementById('error-message');
+    const stepLinks = document.querySelectorAll('.step-link');
+    const stepContents = document.querySelectorAll('.step-content');
+    const nextBtns = document.querySelectorAll('.next-btn');
+    const prevBtns = document.querySelectorAll('.prev-btn');
+    
+    // --- PDF.js worker setup ---
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+
+    // --- STEPPER/WIZARD LOGIC ---
+    let currentStep = 1;
+
+    function updateStepUI() {
+        stepContents.forEach(content => content.classList.add('hidden'));
+        document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+
+        stepLinks.forEach(link => {
+            const step = parseInt(link.dataset.step);
+            const indicator = link.querySelector('.step-indicator');
+            const text = link.querySelector('span:last-child');
+            if (step < currentStep) { // Completed
+                indicator.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-500', 'dark:text-slate-400', 'bg-indigo-600');
+                indicator.classList.add('bg-green-500', 'text-white');
+                indicator.innerHTML = '&#10003;'; // Checkmark
+                text.classList.remove('text-slate-500', 'dark:text-slate-400');
+                text.classList.add('text-slate-700', 'dark:text-slate-300');
+            } else if (step === currentStep) { // Active
+                indicator.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-500', 'dark:text-slate-400', 'bg-green-500');
+                indicator.classList.add('bg-indigo-600', 'text-white');
+                indicator.innerHTML = step;
+                text.classList.remove('text-slate-500', 'dark:text-slate-400');
+                text.classList.add('text-slate-700', 'dark:text-slate-300');
+            } else { // Upcoming
+                indicator.classList.remove('bg-indigo-600', 'bg-green-500', 'text-white');
+                indicator.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-500', 'dark:text-slate-400');
+                indicator.innerHTML = step;
+                text.classList.remove('text-slate-700', 'dark:text-slate-300');
+                text.classList.add('text-slate-500', 'dark:text-slate-400');
+            }
+        });
+    }
+
+    nextBtns.forEach(btn => btn.addEventListener('click', () => {
+        if (currentStep < 3) currentStep++;
+        updateStepUI();
+    }));
+    prevBtns.forEach(btn => btn.addEventListener('click', () => {
+        if (currentStep > 1) currentStep--;
+        updateStepUI();
+    }));
+    stepLinks.forEach(link => link.addEventListener('click', (e) => {
+        e.preventDefault();
+        currentStep = parseInt(link.dataset.step);
+        updateStepUI();
+    }));
+
+
+    // --- FILE HANDLING ---
+    resumeUpload.addEventListener('change', async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        fileUploadStatus.textContent = `Reading ${file.name}...`;
+        fileUploadStatus.className = 'text-xs mt-1 text-amber-600';
+
+        try {
+            if (file.type === "application/pdf") {
+                const pdfText = await readPdfFile(file);
+                resumeText = pdfText;
+                resumePaste.value = pdfText; // Show extracted text
+                fileUploadStatus.textContent = `Successfully extracted text from ${file.name}.`;
+                fileUploadStatus.className = 'text-xs mt-1 text-green-600';
+            } else {
+                const text = await readTextFile(file);
+                resumeText = text;
+                resumePaste.value = text; // Show extracted text
+                fileUploadStatus.textContent = `Successfully loaded ${file.name}.`;
+                fileUploadStatus.className = 'text-xs mt-1 text-green-600';
+            }
+        } catch (error) {
+            console.error("Error processing file:", error);
+            fileUploadStatus.textContent = 'Error reading file. You can paste the text manually.';
+            fileUploadStatus.className = 'text-xs mt-1 text-red-600';
+        }
+    });
+
+    async function readPdfFile(file) {
+        const reader = new FileReader();
+        return new Promise((resolve, reject) => {
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const pdf = await pdfjsLib.getDocument({ data }).promise;
+                    let fullText = '';
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                    }
+                    resolve(fullText);
+                } catch (error) { reject(error); }
+            };
+            reader.onerror = (e) => reject(e);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function readTextFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsText(file);
+        });
+    }
+    
+    // --- FORM SUBMISSION ---
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const role = form.elements['role'].value;
+        const jd = document.getElementById('jd').value;
+        const linkedinPost = document.getElementById('linkedin-post').value;
+        const customQuestions = document.getElementById('custom-questions').value;
+        const pastedResume = resumePaste.value;
+
+        let finalResumeText = pastedResume.trim() ? pastedResume : resumeText;
+
+        if (!finalResumeText || !jd) {
+            alert("Please ensure you have a resume loaded/pasted and a job description pasted.");
+            return;
+        }
+
+        const inputs = { role, jd, linkedinPost, customQuestions, resumeText: finalResumeText };
+        await generateContent(inputs);
+    });
+
+    // --- API CALL AND LOGIC ---
+    async function generateContent(inputs) {
+        document.getElementById('form-container').classList.add('hidden');
+        outputSection.classList.remove('hidden');
+        resultsContainer.classList.add('hidden');
+        errorMessage.classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        const systemPrompt = `
+            VOICE & STYLE RULES (very important):
+            - **CRITICAL RULE: You are writing AS Prajakta Shevakari. All outputs must be from her first-person perspective ('I', 'my'). Never refer to 'Prajakta' or 'the candidate' in the third person in your final output.**
+            - Natural, humble, specific; no grandstanding, no clichés.
+            - Craft a compelling narrative that connects my specific achievements to the company's needs identified in the JD.
+            - Prefer short, varied sentences. Use everyday words. Avoid marketing tone.
+            - Show 1–2 precise links between the candidate’s background and the job/company mission.
+            - Never use filler phrases like: “I’m thrilled/passionate,” “leverage synergies,” “resonate/resonated,” “I believe my skills align,” “I’m excited to apply,” “eager to contribute,” “dynamic/fast-paced environment,” “AI-powered,” “cutting-edge,” “seasoned professional,” “results-driven,” “utilize,” “as per.”
+            - Default to U.S. spelling. No emojis. Keep claims modest and verifiable.
+
+            EVIDENCE & SPECIFICITY RULES:
+            - Pull concrete bullets (numbers/ownership/scope) from the resume only if they plausibly match the JD.
+            - Don’t invent achievements. If unsure, omit or soften with “examples include …”.
+
+            COMPANY/JD USE RULES:
+            - Extract 1–2 genuinely important problems, principles, or user outcomes from the JD and (if provided) the LinkedIn post.
+            - Tie my most relevant 1–2 experiences directly to those items.
+            - If the company mission/values is not stated, infer from the JD text; do not guess beyond that.
+            
+            TASK-SPECIFIC INSTRUCTIONS:
+
+            1.  **For the 'comment' on a LinkedIn Post:**
+                - Adopt the persona of a highly articulate, thoughtful candidate.
+                - Tone must be: calm, genuine, curious, and respectful. Confident but never braggy.
+                - Acknowledge the post naturally (e.g., “Thanks for sharing” / “Appreciate you posting this”).
+                - Show genuine interest in the kind of work described.
+                - Optionally mention applying without sounding transactional.
+                - End with a smooth, forward-looking line.
+                - Length: 2-4 short sentences.
+
+            2.  **For the 'connection_request':**
+                - Keep it concise and respectful.
+                - Mention the specific role and a point of connection from the JD or post.
+                - Length: ≤ 300 characters.
+
+            3.  **For the 'cover_letter':**
+                - Follow the structure of the provided sample: Start by identifying the role, build a narrative connecting my past work (e.g., backend engineering, cloud migration, ML projects) to the role's requirements, express genuine interest in the team's specific mission, and conclude professionally.
+                - Always include my portfolio link at the end: https://pshevak.github.io/prajaktashevakari/
+                - Length: 220–350 words.
+            
+            4. **For 'custom_answers':**
+                - Answer each question directly and concisely, using specific examples from my resume.
+                - Length: ≤ 120–180 words each.
+
+            ROLE-SPECIFIC HEURISTICS:
+            IF ROLE_TYPE=PM:
+            - Prioritize: roadmap/PRD, stakeholder alignment, measurable user/process outcomes, launch or iteration cycles, metrics moved.
+            - From Prajakta's background: Barclays real-time exec dashboard ownership; HR automation at JHU (requirements → delivery); FIS 90+ releases with 95% on-time; D-FuseSmileNet product framing.
+            
+            IF ROLE_TYPE=SDE:
+            - Prioritize: reliability, backend/data infra, cloud migration, Spark/Java/Python, reduced MTTR, pipelines, testing, performance.
+            - From Prajakta's background: JPMC AWS migration + Spark tool; Barclays DR pipeline 4h → <10 min; MTTR cut by ~70%; internal Python automation apps.
+
+            OUTPUT FORMAT:
+            - You MUST respond with a single JSON object. Do not include any text outside of the JSON object.
+            - The JSON object must have these keys: "comment", "connection_request", "cover_letter", "custom_answers".
+            - The value for "custom_answers" should be an array of strings, with each string answering one of the custom questions provided. If no questions are provided, it should be an empty array.
+        `;
+
+        const userQuery = `
+            Based on the following context about the candidate (Prajakta Shevakari), generate tailored application materials.
+
+            --- ROLE TYPE ---
+            ${inputs.role}
+
+            --- CANDIDATE RESUME ---
+            ${inputs.resumeText}
+
+            --- CANDIDATE STATEMENT OF PURPOSE (SOP) HIGHLIGHTS ---
+            ${SOP_CONTEXT}
+
+            --- CANDIDATE PROJECT HIGHLIGHTS ---
+            ${PROJECT_CONTEXT}
+
+            --- JOB DESCRIPTION ---
+            ${inputs.jd}
+
+            --- LINKEDIN POST (if any) ---
+            ${inputs.linkedinPost || 'Not provided.'}
+
+            --- CUSTOM QUESTIONS TO ANSWER (one per line) ---
+            ${inputs.customQuestions || 'Not provided.'}
+
+            Generate the JSON output now.
+        `;
+        
+        const apiKey = "PASTE_YOUR_GOOGLE_AI_API_KEY_HERE"; // <-- PASTE YOUR KEY HERE
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                })
+            });
+
+            if (!response.ok) throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+            
+            const result = await response.json();
+            const rawText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!rawText) throw new Error("No content generated in the API response.");
+
+            const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
+            const jsonString = jsonMatch ? jsonMatch[1] : rawText;
+            const parsedResult = JSON.parse(jsonString);
+            
+            displayResults(parsedResult, inputs);
+
+        } catch (error) {
+            console.error("Error during API call:", error);
+            errorMessage.classList.remove('hidden');
+            errorMessage.querySelector('span').textContent = ` ${error.message}. Please check your API Key and console for more details.`;
+        } finally {
+            loader.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+        }
+    }
+
+    function displayResults(data, originalInputs) {
+        const tabButtonsContainer = document.getElementById('tab-buttons');
+        const tabContentContainer = document.getElementById('tab-content');
+        tabButtonsContainer.innerHTML = '';
+        tabContentContainer.innerHTML = '';
+        
+        const outputs = [
+            { title: 'Comment', key: 'comment', content: data.comment },
+            { title: 'Connection Request', key: 'connection_request', content: data.connection_request },
+            { title: 'Cover Letter', key: 'cover_letter', content: data.cover_letter }
+        ];
+
+        if (data.custom_answers && data.custom_answers.length > 0) {
+            data.custom_answers.forEach((answer, index) => {
+                const questionLines = originalInputs.customQuestions.split('\n');
+                const question = questionLines[index] || `Custom Question ${index + 1}`;
+                outputs.push({ title: `Answer ${index + 1}`, key: `custom_answer_${index}`, content: answer, question: question });
+            });
+        }
+        
+        let isFirstTab = true;
+        outputs.forEach(output => {
+            if (!output.content) return;
+
+            // Create Tab Button
+            const button = document.createElement('button');
+            button.className = `tab-button text-sm sm:text-base font-medium p-4 border-b-2 border-transparent transition text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400`;
+            button.textContent = output.title;
+            button.dataset.tab = output.key;
+            
+            // Create Tab Panel
+            const panel = document.createElement('div');
+            panel.id = output.key;
+            panel.className = 'tab-panel hidden';
+            panel.dataset.key = output.key;
+            
+            let titleHtml = output.question ? `<p class="mb-2 text-sm italic text-slate-500 dark:text-slate-400">Question: "${output.question}"</p>` : '';
+
+            panel.innerHTML = `
+                ${titleHtml}
+                <div class="prose dark:prose-dark max-w-none whitespace-pre-wrap text-slate-600 dark:text-slate-300">${output.content}</div>
+                <div class="mt-6 text-right">
+                    <button onclick="copyToClipboard(this)" class="bg-slate-200 dark:bg-slate-700 text-sm font-medium py-2 px-4 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition">Copy Text</button>
+                </div>
+                <div class="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <textarea data-feedback-for="${output.key}" placeholder="Provide feedback to regenerate this section..." class="w-full p-2 text-sm bg-slate-100 dark:bg-slate-700 rounded-lg border border-slate-300 dark:border-slate-600"></textarea>
+                    <button data-regenerate-key="${output.key}" class="regenerate-btn mt-2 w-full text-sm bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-600 transition">
+                        Regenerate
+                    </button>
+                    <div class="regenerate-loader hidden w-6 h-6 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto mt-2"></div>
+                </div>
+            `;
+
+            tabButtonsContainer.appendChild(button);
+            tabContentContainer.appendChild(panel);
+
+            if (isFirstTab) {
+                button.classList.add('active');
+                panel.classList.remove('hidden');
+                isFirstTab = false;
+            }
+        });
+
+        // Add event listeners for tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.add('hidden'));
+                button.classList.add('active');
+                document.getElementById(button.dataset.tab).classList.remove('hidden');
+            });
+        });
+        
+        tabContentContainer.addEventListener('click', handleRegenerateClick);
+        tabContentContainer.dataset.originalInputs = JSON.stringify(originalInputs);
+    }
+    
+    // --- REGENERATION & COPY LOGIC ---
+    async function handleRegenerateClick(event) {
+        if (!event.target.matches('.regenerate-btn')) return;
+
+        const button = event.target;
+        const keyToRegenerate = button.dataset.regenerateKey;
+        const card = button.closest('[data-key]');
+        const feedback = card.querySelector(`[data-feedback-for="${keyToRegenerate}"]`).value.trim();
+        const originalInputs = JSON.parse(document.getElementById('tab-content').dataset.originalInputs);
+        const originalContentContainer = card.querySelector('.prose');
+        const originalContent = originalContentContainer.innerText;
+        const loader = card.querySelector('.regenerate-loader');
+
+        if (!feedback) {
+            alert("Please provide feedback before regenerating.");
+            return;
+        }
+
+        button.classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        const systemPrompt = `
+            You are an expert editor revising a piece of text for a job application.
+            The user wants you to regenerate a specific section based on their feedback.
+            **CRITICAL RULE: You are writing AS Prajakta Shevakari. The revised text must be from her first-person perspective ('I', 'my').**
+            Adhere to all VOICE, STYLE, and EVIDENCE rules from the initial generation.
+            OUTPUT ONLY the new, revised text for the requested section. Do not add any extra commentary or formatting.
+        `;
+
+        const userQuery = `
+            Please regenerate the following text block based on the user's feedback.
+            --- ORIGINAL TEXT to revise ---
+            ${originalContent}
+            --- USER FEEDBACK ---
+            "${feedback}"
+            --- FULL CONTEXT (from original request) ---
+            Role Type: ${originalInputs.role}
+            Resume: ${originalInputs.resumeText}
+            Job Description: ${originalInputs.jd}
+            Now, provide ONLY the updated text for this section.
+        `;
+
+        const apiKey = "PASTE_YOUR_GOOGLE_AI_API_KEY_HERE";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                })
+            });
+
+            if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+
+            const result = await response.json();
+            const newText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!newText) throw new Error("No new content was generated.");
+            
+            originalContentContainer.innerText = newText;
+            card.querySelector(`[data-feedback-for="${keyToRegenerate}"]`).value = '';
+        } catch (error) {
+            console.error("Regeneration failed:", error);
+            originalContentContainer.innerHTML += `<br><strong class="text-red-500">Error: Could not regenerate.</strong>`;
+        } finally {
+            button.classList.remove('hidden');
+            loader.classList.add('hidden');
+        }
+    }
+    
+    function copyToClipboard(button) {
+        const textToCopy = button.closest('.tab-panel').querySelector('.prose').innerText;
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = 'Copy Text'; }, 2000);
+    }
+    
+    // Initial UI setup
+    updateStepUI();
+
+</script>
+</body>
+</html>
+
