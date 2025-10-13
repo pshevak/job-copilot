@@ -106,11 +106,12 @@
                             <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200">Step 2: Job Details</h2>
                             <div class="space-y-6">
                                 <div>
-                                    <label for="jd" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Paste Job Description (Mandatory)</label>
-                                    <textarea id="jd" rows="10" placeholder="Paste the full job description here..." required class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
+                                    <label for="jd" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Paste Job Description (Recommended)</label>
+                                    <textarea id="jd" rows="10" placeholder="Paste the full job description here..." class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
+                                    <p class="text-xs text-slate-500 mt-2">A JD is required for generating a Cover Letter and Custom Answers.</p>
                                 </div>
                                 <div>
-                                    <label for="linkedin-post" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">LinkedIn Post Content (Optional)</label>
+                                    <label for="linkedin-post" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">LinkedIn Post Content (Provide if no JD)</label>
                                     <textarea id="linkedin-post" rows="5" placeholder="If applying via a LinkedIn post, paste the post's content here..." class="w-full p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-300 dark:border-slate-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
                                 </div>
                             </div>
@@ -162,6 +163,10 @@
 
             </div> <!-- /main-content -->
         </main>
+
+        <footer class="text-center mt-8 py-4">
+            <p class="text-sm text-slate-500 dark:text-slate-400">&copy; 2025 Prajakta Shevakari. All Rights Reserved.</p>
+        </footer>
     </div>
 
 <script>
@@ -339,8 +344,8 @@ Clinical NER with LLMs: LLM-driven annotation pipeline for Bengali medical text,
 
         let finalResumeText = pastedResume.trim() ? pastedResume : resumeText;
 
-        if (!finalResumeText || !jd) {
-            alert("Please ensure you have a resume loaded/pasted and a job description pasted.");
+        if (!finalResumeText || (!jd.trim() && !linkedinPost.trim())) {
+            alert("Please ensure you have a resume loaded/pasted and provide either a Job Description or LinkedIn Post content.");
             return;
         }
 
@@ -375,6 +380,11 @@ Clinical NER with LLMs: LLM-driven annotation pipeline for Bengali medical text,
             - Tie my most relevant 1–2 experiences directly to those items.
             - If the company mission/values is not stated, infer from the JD text; do not guess beyond that.
             
+            HANDLING MISSING INFORMATION:
+            - If the 'JOB DESCRIPTION' is empty or not provided, you MUST rely solely on the 'LINKEDIN POST' content.
+            - In this "post-only" scenario, you must still generate the 'comment' and 'connection_request'.
+            - However, if the JD is missing, you MUST set the values for 'cover_letter' to an empty string ("") and 'custom_answers' to an empty array ([]).
+
             TASK-SPECIFIC INSTRUCTIONS:
 
             1.  **For the 'comment' on a LinkedIn Post:**
@@ -442,7 +452,7 @@ Clinical NER with LLMs: LLM-driven annotation pipeline for Bengali medical text,
             Generate the JSON output now.
         `;
         
-        const apiKey = "PASTE_YOUR_GOOGLE_AI_API_KEY_HERE"; // <-- PASTE YOUR KEY HERE
+        const apiKey = "AIzaSyDtqM7ESEGRyvhB7xOsKzEU-nWjgbc9oac"; // <-- PASTE YOUR KEY HERE
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
         try {
@@ -596,7 +606,7 @@ Clinical NER with LLMs: LLM-driven annotation pipeline for Bengali medical text,
             Now, provide ONLY the updated text for this section.
         `;
 
-        const apiKey = "PASTE_YOUR_GOOGLE_AI_API_KEY_HERE";
+        const apiKey = "AIzaSyDtqM7ESEGRyvhB7xOsKzEU-nWjgbc9oac";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
         try {
@@ -645,4 +655,5 @@ Clinical NER with LLMs: LLM-driven annotation pipeline for Bengali medical text,
 </script>
 </body>
 </html>
+
 
